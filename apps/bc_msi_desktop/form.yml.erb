@@ -1,0 +1,44 @@
+<%-
+  accounts = %x[/opt/msi/bin/get_cached_accounts].split(" ")
+-%>
+
+---
+cluster: agate
+
+attributes:
+  desktop:
+    label: "Desktop Environment"
+    widget: select
+    options:
+      - "mate"
+      - "xfce"
+  account:
+    widget: select
+    options:
+      <%- accounts.each do |account| %>
+      - "<%= account %>"
+      <%- end %>
+  bc_vnc_idle: 0
+  bc_vnc_resolution:
+    required: true
+  bc_num_slots: 2
+  num_hours:
+    label: Time Limit
+    help: Shorter times will probably start faster
+    widget: select
+    options:
+      - ["4 Hours", 4]
+      - ["8 Hours", 8]
+      - ["3 Days", 72]
+      - ["Until Next Maintenance", -1]
+  bc_queue: interactive
+
+form:
+  - bc_vnc_idle
+  - desktop
+  - account
+  - num_hours
+  - bc_num_slots
+  - bc_queue
+  - bc_vnc_resolution
+  - bc_email_on_started
