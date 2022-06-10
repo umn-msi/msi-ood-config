@@ -34,4 +34,16 @@ class MSI
 
   end
 
+  def self.next_maintenace
+    now = Time.now
+    maint = Time.new(now.year, now.month, now.day)
+
+    while maint.day > 7 or (maint.day <= 7 and maint.wday > 3)
+        maint += 86400
+    end
+
+    return maint
+  end
+
+
 end
