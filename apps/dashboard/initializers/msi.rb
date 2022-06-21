@@ -34,7 +34,7 @@ class MSI
 
   end
 
-  def self.next_maintenace
+  def self.next_maintenance
     now = Time.now
     maint = Time.new(now.year, now.month, now.day)
 
