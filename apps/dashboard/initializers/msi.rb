@@ -58,7 +58,7 @@ class MSI
       ],
       agate: [
         ['Interactive - 2 cores, 32 GB, 64 GB local scratch', 'interactive:1:2:32768:65536:0'],
-        ['Interactive GPU - 16 cores, 60 GB, 100 GB local scratch', 'interactive-gpu:1:16:61440:102400:1'],
+        ['Interactive GPU - 16 cores, 60 GB, 100 GB local scratch, 1 A40', 'interactive-gpu:1:16:61440:102400:1'],
         ['Big Mem - 32 cores, 500 GB, 190 GB local scratch', 'ag2tb:1:32:512000:194560:0'],
       ],
     }
