@@ -57,8 +57,8 @@ class MSI
         ['K40 GPU - 12 cores, 60 GB, 100 GB local scratch, 1 K40', 'k40:12:60:100:1'],
       ],
       agate: [
-        ['Interactive - 2 cores, 32 GB, 64 GB local scratch', 'interactive:1:2:32:64'],
-        ['Big Mem - 32 cores, 500 GB, 190 GB local scratch', 'ag2tb:1:32:500:190'],
+        ['Interactive - 2 cores, 32 GB, 64 GB local scratch', 'interactive:1:2:32:64:0'],
+        ['Big Mem - 32 cores, 500 GB, 190 GB local scratch', 'ag2tb:1:32:500:190:0'],
       ],
     }
   end
