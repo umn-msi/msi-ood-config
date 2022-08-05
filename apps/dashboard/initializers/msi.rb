@@ -38,14 +38,14 @@ class MSI
     now = Time.now
     maint = Time.new(now.year, now.month, now.day)
 
-    while maint.day > 7 or (maint.day <= 7 and maint.wday > 3)
+    while maint.day > 7 or (maint.day <= 7 and maint.wday != 3)
         maint += 86400
     end
 
     return maint
   end
 
-  def self.minutes_to_maintenance
+  def self.seconds_to_maintenance
     return (self.next_maintenance - Time.now).to_i
   end
 
