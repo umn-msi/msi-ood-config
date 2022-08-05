@@ -46,7 +46,7 @@ class MSI
   end
 
   def self.minutes_to_maintenance
-    return self.next_maintenance - Time.now
+    return (self.next_maintenance - Time.now).to_i
   end
 
   def self.quick_resources 
