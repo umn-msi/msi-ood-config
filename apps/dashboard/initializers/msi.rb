@@ -3,7 +3,7 @@ require 'yaml'
 class MSI
 
   def self.accounts_cache_path
-    Dir.mkdir("#{Dir.home}/ondemand", 2755) unless File.exists?("#{Dir.home}/ondemand")
+    Dir.mkdir("#{Dir.home}/ondemand") unless File.exists?("#{Dir.home}/ondemand")
     return "#{Dir.home}/ondemand/accounts.cache"
 
   end
