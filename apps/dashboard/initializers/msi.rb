@@ -58,7 +58,7 @@ class MSI
       mesabi: [
         ['Interactive - 3 cores, 8 GB, 48 GB local scratch', 'interactive:1:3:8192:49152:0'],
         ['Interactive Long - 2 cores, 6 GB, 48 GB local scratch', 'interactive-long:1:2:6144:49152:0'],
-        ['Big Mem - 12 cores, 128 GB, 180 GB local scratch', 'bigmem:1:12:131072:184320:0'],
+        ['Big Mem - 12 cores, 128 GB, 180 GB local scratch', 'msibigmem:1:12:131072:184320:0'],
         ['K40 GPU - 12 cores, 60 GB, 100 GB local scratch, 1 K40', 'k40:1:12:61440:102400:1'],
       ],
       agate: [
