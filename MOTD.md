@@ -2,4 +2,4 @@ Open OnDemand is a web-based portal for interactive access to MSI’s compute cl
 
 For more information about Open OnDemand at MSI, please visit https://www.msi.umn.edu/content/using-openondemand
 
-For assistance please contact us at https://www.msi.umn.edu/support/help.html, help@msi.umn.edu, or (612)626-0802.
+For assistance please contact us at https://www.msi.umn.edu/content/helpdesk, help@msi.umn.edu, or (612)626-0802.
