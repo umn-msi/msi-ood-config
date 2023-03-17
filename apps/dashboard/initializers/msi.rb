@@ -11,7 +11,7 @@ class MSI
   def self.accounts_refresh
     Rails.logger.info("accounts_refresh")
 
-    accounts_raw = %x[sacctmgr --noheader show assoc user="#{User.new.name}" format=account]
+    accounts_raw = %x[sacctmgr --noheader show assoc user="#{User.new.name}" format=account%50]
     if not $?.success?
       Rails.logger.warn("Failed to query SlurmDB for accounts")
       return []
