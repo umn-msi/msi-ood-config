@@ -43,7 +43,9 @@ class MSI
         maint += 86400
     end
 
-    return maint
+    # Create a new time object that truncates hours. 
+    # maint has 01:00 or 23:00 hours when spanning a DST transition depending on direction
+    return Time.new(maint.year, maint.month, maint.day)
   end
 
   def self.seconds_to_maintenance
