@@ -11,14 +11,18 @@ class MSI
   def self.accounts_refresh
     Rails.logger.info("accounts_refresh")
 
-    accounts_raw = %x[sacctmgr --noheader show assoc user="#{User.new.name}" format=account%50]
+    accounts_raw = %x[sacctmgr --noheader show assoc user="#{User.new.name}" format=account%50,MaxJobs]
     if not $?.success?
       Rails.logger.warn("Failed to query SlurmDB for accounts")
       return []
 
     end
 
-    accounts = accounts_raw.split("\n").uniq().map { |account| account.strip }
+    accounts = accounts_raw.split("\n")
+                 .uniq()
+                 .filter { |record| record[1].to_i > 0 }
+                 .map { |record| record[0].strip }
+
     File.write(self.accounts_cache_path, accounts.to_yaml)
 
     return accounts
