@@ -17,11 +17,12 @@ class MSI
       return []
 
     end
-
+    
     accounts = accounts_raw.split("\n")
+                 .map { |row| row.split() }
+                 .filter { |row| row[1].to_i > 0 }
+                 .map { |row| row[0].strip }
                  .uniq()
-                 .filter { |record| record[1].to_i > 0 }
-                 .map { |record| record[0].strip }
 
     File.write(self.accounts_cache_path, accounts.to_yaml)
 
