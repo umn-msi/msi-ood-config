@@ -17,7 +17,7 @@ class MSI
       return []
 
     end
-    
+
     accounts = accounts_raw.split("\n")
                  .map { |row| row.split() }
                  .filter { |row| row[1].to_i > 0 }
