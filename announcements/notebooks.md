@@ -1,0 +1,1 @@
+**Notice for JuptyerHub Users:** During the June maintenance, the stand-alone Jupyter Notebooks service was retired. You have been redirected to our OnDemand service which can launch notebooks through an [interactive app](https://ondemand.msi.umn.edu/pun/sys/dashboard/batch_connect/sys/bc_msi_jupyter/session_contexts/new).
