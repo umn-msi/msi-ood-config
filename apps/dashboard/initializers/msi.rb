@@ -62,12 +62,6 @@ class MSI
       # Format is partition:nodes:ntasks-per-node:memory:tmp:gpus
       common: [
       ],
-      mesabi: [
-        ['Interactive - 3 cores, 8 GB, 48 GB local scratch', 'interactive:1:3:8192:49152:0'],
-        ['Interactive Long - 2 cores, 6 GB, 48 GB local scratch', 'interactive-long:1:2:6144:49152:0'],
-        ['Big Mem - 12 cores, 128 GB, 180 GB local scratch', 'msibigmem:1:12:131072:184320:0'],
-        ['K40 GPU - 12 cores, 60 GB, 100 GB local scratch, 1 K40', 'k40:1:12:61440:102400:1'],
-      ],
       agate: [
         ['Interactive - 2 cores, 32 GB, 64 GB local scratch', 'interactive:1:2:32768:65536:0'],
         ['Interactive Long - 2 cores, 32 GB, 64 GB local scratch', 'interactive-long:1:2:32768:65536:0'],
@@ -85,15 +79,6 @@ class MSI
         ['preempt', 'preempt'],
         ['preempt-gpu', 'preempt-gpu'],
         ['interactive-long', 'interactive-long'],
-      ],
-      mesabi: [
-        ['small', 'small'],
-        ['large', 'large'],
-        ['amdsmall', 'amdsmall'],
-        ['amdlarge', 'amdlarge'],
-        ['amd512', 'amd512'],
-        ['amd2tb', 'amd2tb'],
-        ['v100', 'v100'],
       ],
       agate: [
         ['agsmall', 'agsmall'],
