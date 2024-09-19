@@ -1,0 +1,1 @@
+The quick links to Panasas group directories have been removed to increase stability of the OnDemand service. You can still visit these paths manually, but they might lock up your session.
