@@ -1,1 +1,1 @@
-The Panasas quick links and all Panasas mounts have been removed from OnDemand to increase stability.
+We have temporarily removed all Panasas mounts from the Files application while we investigate stability issues with the vendor.
