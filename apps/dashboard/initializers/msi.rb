@@ -48,6 +48,13 @@ class MSI
         maint += 86400
     end
 
+    # If the first Wednesday of the month is a holiday, then maintenance day
+    # will be on the following Wednesday.  The only holidays that can be on
+    # the first Wed of the month are New Year's and Independence Day.
+    if (maint.month == 1 and maint.day == 1) or (maint.month == 7 and maint.day == 4)
+        maint += 7 * 86400
+    end
+
     # Create a new time object that truncates hours. 
     # maint has 01:00 or 23:00 hours when spanning a DST transition depending on direction
     return Time.new(maint.year, maint.month, maint.day)
