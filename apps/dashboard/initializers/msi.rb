@@ -42,22 +42,42 @@ class MSI
 
   def self.next_maintenance
     now = Time.now
-    maint = Time.new(now.year, now.month, now.day)
 
-    while maint.day > 7 or (maint.day <= 7 and maint.wday != 3)
-        maint += 86400
+    # Create a new time object that truncates hours so we can compare to maint
+    # below.
+    now = Time.new(now.year, now.month, now.day)
+
+    # Starting at the 1st of the month, find this month's maintenance day.
+    maint = Time.new(now.year, now.month, 1)
+
+    loop do
+        # Find the first Wednesday of the month.
+        day = (3 - maint.wday) % 7 + 1
+        maint = Time.new(maint.year, maint.month, day)
+
+        # If first Wednesday of the month is a holiday, then maintenance day
+        # will be on the following Wednesday.  The only holidays that can be on
+        # the first Wed of the month are New Year's and Independence Day.
+        if (maint.month == 1 and maint.day == 1) or (maint.month == 7 and maint.day == 4)
+            maint = Time.new(maint.year, maint.month, maint.day + 7)
+        end
+
+        if maint < now
+            # We are past maintenance day this month.  Search next month.
+            yr = maint.year
+            mo = maint.month + 1
+            if mo == 13
+                mo = 1
+                yr += 1
+            end
+            maint = Time.new(yr, mo, 1)
+        else
+            # Done
+            break
+        end
     end
 
-    # If the first Wednesday of the month is a holiday, then maintenance day
-    # will be on the following Wednesday.  The only holidays that can be on
-    # the first Wed of the month are New Year's and Independence Day.
-    if (maint.month == 1 and maint.day == 1) or (maint.month == 7 and maint.day == 4)
-        maint += 7 * 86400
-    end
-
-    # Create a new time object that truncates hours. 
-    # maint has 01:00 or 23:00 hours when spanning a DST transition depending on direction
-    return Time.new(maint.year, maint.month, maint.day)
+    return maint
   end
 
   def self.seconds_to_maintenance
