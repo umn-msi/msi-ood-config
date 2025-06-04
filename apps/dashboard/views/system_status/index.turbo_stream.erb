@@ -1,0 +1,118 @@
+<turbo-stream action="replace" target="system-status">
+  <template>
+    <div class="col-sm-6 col-xs-12">
+      <div class="col border rounded text-center p-2 m-2">
+
+        <div class="h3"><strong>Agate Cluster Status</strong></div>
+          <%-
+            ### Job stats
+            squeue_raw = %x{squeue -hO State | sort | uniq -c}
+
+            running_jobs = 0
+            pending_jobs = 0
+
+            squeue_raw.each_line do |line|
+              count, state = line.split()
+              if state == 'PENDING'
+                pending_jobs = count.to_i
+              elsif state == 'RUNNING'
+                running_jobs = count.to_i
+              end
+            end
+          -%>
+
+        <div class="col">
+          <table class="table mb-0">
+            <thead>
+              <tr>
+                <th scope="col">Jobs Running</th>
+                <th scope="col">Jobs Pending</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr>
+                <td class="border-bottom-0"><%= running_jobs %></td>
+                <td class="border-bottom-0"><%= pending_jobs %></td>
+              </tr>
+            </tbody>
+          </table>
+                                </div>
+
+        <%-
+          ### Partition stats
+
+          def extract_gpu(line)
+            if match = line.match(/gpu:(\w+):(\d+)/)
+              return GPUGres.new(match[1], match[2])
+            end
+
+            return nil
+          end
+
+          def get_integer_percent(numerator, denominator)
+            return (numerator / denominator.to_f * 100.0).to_i
+          end
+
+          partitions = ['msismall', 'msilarge', 'msibigmem', 'interactive', 'interactive-gpu', 'msigpu']
+          sinfo_raw = %x{sinfo -p #{partitions.join(',')} -hNO "CPUsState:|,Partition:|,Gres:|,GresUsed:"}
+
+          partition_stats = {}
+
+          sinfo_raw.each_line do |line|
+
+            parts = line.split('|')
+            alloc_cores, idle_cores, other_cores, total_cores = parts[0].split('/')
+            partition = parts[1]
+
+            partition_stats[partition] ||= PartitionStats.new(partition, 0, 0, 0, 0, {})
+            partition_stats[partition].alloc_cores += alloc_cores.to_i
+            partition_stats[partition].total_cores += total_cores.to_i
+            partition_stats[partition].total_nodes += 1
+            if alloc_cores == total_cores
+              partition_stats[partition].alloc_nodes += 1
+            end
+
+            # configured gres
+            if gpu_gres = extract_gpu(parts[2])
+              partition_stats[partition].gpus[gpu_gres.type] ||= GPUStats.new(gpu_gres.type, 0, 0)
+              partition_stats[partition].gpus[gpu_gres.type].total += gpu_gres.count.to_i
+            end
+
+            # allocated gres
+            if gpu_gres = extract_gpu(parts[3])
+              partition_stats[partition].gpus[gpu_gres.type] ||= GPUStats.new(gpu_gres.type, 0, 0)
+              partition_stats[partition].gpus[gpu_gres.type].alloc += gpu_gres.count.to_i
+            end
+          end
+        -%>
+
+        <% partitions.each do |partition| %>
+          <% current_stats = partition_stats[partition] %>
+          <br />
+          <div class="h4"><%= partition %></div>
+
+          <div class="h6" style="text-align: left;">Nodes Fully Allocated: <%= current_stats[:alloc_nodes] %>/<%= current_stats[:total_nodes] %></div>
+          <div class="progress">
+            <div class="progress-bar w-<%= get_integer_percent(current_stats[:alloc_nodes], current_stats[:total_nodes]) %>" role="progressbar"></div>
+          </div>
+
+          <div class="h6" style="text-align: left;">Cores Allocated: <%= current_stats[:alloc_cores] %>/<%= current_stats[:total_cores] %></div>
+          <div class="progress">
+            <div class="progress-bar w-<%= get_integer_percent(current_stats[:alloc_cores], current_stats[:total_cores]) %>" role="progressbar"></div>
+          </div>
+
+          <% if current_stats.gpus.any? %>
+            <% current_stats.gpus.each_value do |gpu_stats| %>
+              <div class="h6" style="text-align: left;"><%= gpu_stats.type %> GPUs Allocated: <%= gpu_stats[:alloc] %>/<%= gpu_stats[:total] %></div>
+              <div class="progress">
+                <div class="progress-bar w-<%= get_integer_percent(gpu_stats[:alloc], gpu_stats[:total]) %>" role="progressbar"></div>
+              </div>
+            <% end %>
+          <% end %>
+        <% end %>
+
+      </div>
+    </div>
+  </template>
+</turbo-stream>

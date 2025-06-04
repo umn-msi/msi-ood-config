@@ -1,5 +1,11 @@
 require 'yaml'
 
+# These Structs are used in the system_status partial override
+# They cannot be defined as constants there
+GPUGres = Struct.new(:type, :count)
+GPUStats = Struct.new(:type, :alloc, :total)
+PartitionStats = Struct.new(:name, :alloc_nodes, :total_nodes, :alloc_cores, :total_cores, :gpus)
+
 class MSI
 
   def self.accounts_cache_path
