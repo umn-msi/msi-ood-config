@@ -117,6 +117,7 @@ class MSI
         ['msismall', 'msismall'],
         ['msilarge', 'msilarge'],
         ['msilong', 'msilong'],
+        ['msigpu', 'msigpu'],
         ['msibigmem', 'msibigmem'],
       ],
     }
