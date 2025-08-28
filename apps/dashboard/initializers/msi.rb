@@ -114,11 +114,10 @@ class MSI
         ['interactive-long', 'interactive-long'],
       ],
       agate: [
-        ['agsmall', 'agsmall'],
-        ['aglarge', 'aglarge'],
-        ['ag2tb', 'ag2tb'],
-        ['a100-4', 'a100-4'],
-        ['a100-8', 'a100-8'],
+        ['msismall', 'msismall'],
+        ['msilarge', 'msilarge'],
+        ['msilong', 'msilong'],
+        ['msibigmem', 'msibigmem'],
       ],
     }
   end
