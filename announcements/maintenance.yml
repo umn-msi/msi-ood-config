@@ -1,4 +1,5 @@
 type: warning
+dismissible: false
 msg: |
   <% if Time.now.wday == 3 and Time.now.day <= 7 %>
   Today is a MSI maintenance day, systems may be unavailable.
