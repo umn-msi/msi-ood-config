@@ -4,6 +4,7 @@ Rails.application.config.after_initialize do
     add_paths = ["/scratch.global", "/scratch.global/#{User.new.name}"]
     add_paths.concat User.new.groups.map { |group| "/home/#{group}" }
     add_paths.concat User.new.groups.map { |group| "/projects/standard/#{group}" }
+    add_paths.concat User.new.groups.map { |group| "/projects/regulated/#{group}" }
 
     paths.concat add_paths.map { |p| FavoritePath.new(p) }
   end
