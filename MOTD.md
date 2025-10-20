@@ -1,5 +1,21 @@
-Open OnDemand is a web-based portal for interactive access to MSI’s compute clusters. You can access your MSI files, view your current jobs on the MSI clusters, and access a command line or interactive desktop on a cluster compute node, with configurable memory and compute resources. You also have access to a set of familiar servers, interactive development environments, and graphical user interfaces that have been adapted to use the Open OnDemand platform.
+Open OnDemand (OOD) is a web-based portal for :
 
-For more information about Open OnDemand at MSI, please visit https://www.msi.umn.edu/content/using-openondemand
+* Interactive access to MSI's compute cluster, see Interactive Apps
+* Access and Transfer your MSI files, see [Files](https://ondemand.msi.umn.edu/pun/sys/dashboard/files/)
+* Remote shell to our compute cluster, see [Agate Shell Access](https://ondemand.msi.umn.edu/pun/sys/shell/ssh/agate.msi.umn.edu)
+* Familiar interactive development environments that have been adapted to use the Open OnDemand platform.
 
-For assistance please contact us at https://www.msi.umn.edu/content/helpdesk, help@msi.umn.edu, or (612)626-0802.
+For more information on getting started with MSI visit our [Knowledge Base](https://msi.umn.edu/our-resources/knowledge-base) which includes quick guides on common topics.
+
+To get started with Interactive Computing on MSI, consider our [Tutorials and Materials](https://msi.umn.edu/tutorials/msi-tutorial-and-materials) for recordings on our tutorial sessions.
+
+Additional information on Open OnDemand please visit our page on [Using OpenOnDemand](https://msi.umn.edu/about-msi-services/interactive-hpc/open-ondemand)
+
+For assistance, please contact us at:
+
+* [MSI Help Desk](https://msi.umn.edu/helpdesk)
+* Email help@msi.umn.edu to create a request ticket
+* Call (612) 626-0802
+* Visit 587 Walter Library during office hours
+        * Monday - Friday
+        * 9am-12pm 1pm-4pm
