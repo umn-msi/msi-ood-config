@@ -23,6 +23,3 @@ For assistance, please contact us at:
 * Email help@msi.umn.edu to create a request ticket
 * Call (612) 626-0802
 * Visit 587 Walter Library during office hours Monday - Friday @ 9am-12pm 1pm-4pm
----
-
-The link on the help dropdown menu can be right after 'Using Open OnDemand'. The title can be 'Restoring Interactive Apps' and point to https://msi.umn.edu/our-resources/knowledge-base/managing-home-directory 
