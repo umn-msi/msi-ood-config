@@ -1,0 +1,28 @@
+.quota-row {
+  display: grid;
+  grid-template-columns: 4rem 1fr 3rem;  /* label | bar | percent */
+  column-gap: 0.1rem;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+
+.quota-label {
+  font-weight: 600;
+  text-align: left;
+  padding-left: 0.5rem;
+}
+
+.tree {
+  color: #6c757d;     /* Bootstrap muted */
+  margin-right: 0.25rem;
+  font-family: monospace; /* keeps box drawing aligned */
+}
+
+.quota-bar {
+  width: 100%;
+}
+
+.quota-pct {
+  text-align: right;
+  font-weight: 600;
+}
