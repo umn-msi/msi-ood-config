@@ -4,6 +4,28 @@ user = Etc.getpwuid(Process.uid).name
 gids = Process.groups + [Process.gid]
 groups = gids.uniq.map { |g| Etc.getgrgid(g).name }
 
+# number_to_human_size uses base-2, but we allocate and repot
+# storage in base-10. There used to be a `si` prefix for
+# number_to_human_size, but they removed it..
+def human_size_decimal(bytes, precision: 1)
+  units = %w[B KB MB GB TB PB EB ZB YB]
+  bytes = bytes.to_f
+  return "0 B" if bytes <= 0
+
+  exp = (Math.log(bytes) / Math.log(1000)).floor
+  exp = [exp, units.length - 1].min
+
+  value = bytes / (1000 ** exp)
+
+  formatted =
+    if value >= 10 || exp == 0
+      value.round.to_i.to_s
+    else
+      format("%.#{precision}f", value)
+    end
+
+  "#{formatted} #{units[exp]}"
+end
 
 def emit_usage(label, usage, limit)
 
@@ -21,7 +43,7 @@ def emit_usage(label, usage, limit)
   end
 
   title = if label == 'Data'
-    "#{number_to_human_size(usage)} / #{number_to_human_size(limit)}"
+    "#{human_size_decimal(usage)} / #{human_size_decimal(limit)}"
   else
     "#{number_with_delimiter(usage)} / #{number_with_delimiter(limit)}"
   end
