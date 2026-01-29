@@ -46,6 +46,37 @@ class MSI
 
   end
 
+  def self.user_quotas
+    @user_quotas ||= begin
+      user = User.new.name
+      quota_file = "/common/hpc/bake/quota/user/#{user}.json"
+      JSON.parse(File.read(quota_file))
+    rescue => e
+      Rails.logger.warn("Failed to load user quotas: #{e.message}")
+      {}
+    end
+  end
+
+  def self.group_quotas
+    @group_quotas ||= begin
+      gids = Process.groups + [Process.gid]
+      groups = gids.uniq.map { |g| Etc.getgrgid(g).name }
+      
+      quotas = {}
+      groups.each do |group|
+        group_file = "/common/hpc/bake/quota/group/#{group}.json"
+        next unless File.readable?(group_file)
+        
+        begin
+          quotas[group] = JSON.parse(File.read(group_file))
+        rescue => e
+          Rails.logger.warn("Failed to load quota for group #{group}: #{e.message}")
+        end
+      end
+      quotas
+    end
+  end
+
   def self.next_maintenance
     now = Time.now
 

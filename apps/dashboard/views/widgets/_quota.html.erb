@@ -1,9 +1,5 @@
 <%
 
-user = Etc.getpwuid(Process.uid).name
-gids = Process.groups + [Process.gid]
-groups = gids.uniq.map { |g| Etc.getgrgid(g).name }
-
 # number_to_human_size uses base-2, but we allocate and repot
 # storage in base-10. There used to be a `si` prefix for
 # number_to_human_size, but they removed it..
@@ -70,9 +66,6 @@ def emit_usage(label, usage, limit)
 end
 -%>
 
-
-<% user_quotas = JSON.parse(File.read("/common/hpc/bake/quota/user/#{user}.json")) %>
-
 <div class="card system-and-shared-apps-header">
   <div class="card-header">
     Quota Usage
@@ -85,20 +78,20 @@ end
     </span>
 
     <span class="list-group-item d-flex flex-column align-items-center mb-0 header" style="background-color: white;">
-      <% homedir = user_quotas['vast']['/msicore/users'] %>
+      <% homedir = MSI.user_quotas['vast']['/msicore/users'] %>
       <%= emit_usage('Data', homedir['used_capacity'], homedir['hard_limit']).html_safe %>
       <%= emit_usage('Files', homedir['used_inodes'], homedir['hard_limit_inodes']).html_safe %>
     </span>
 
 <% 
-if user_quotas['tier2'] != nil
+if MSI.user_quotas['tier2'] != nil
 %>
     <span class="list-group-item d-flex align-items-center mb-0 header">
       <label class="flex-grow-1 mb-0 fw-semibold text-dark">Personal Tier 2</label>
     </span>
 
     <span class="list-group-item d-flex flex-column align-items-center mb-0 header" style="background-color: white;">
-      <%= emit_usage('Data', user_quotas['tier2']['size_kb'], user_quotas['tier2']['max_size_kb']).html_safe %>
+      <%= emit_usage('Data', MSI.user_quotas['tier2']['size_kb'], MSI.user_quotas['tier2']['max_size_kb']).html_safe %>
     </span>
 <%
 end
@@ -106,12 +99,8 @@ end
 
 <% 
 
-groups.each do |group|
-  group_file = "/common/hpc/bake/quota/group/#{group}.json"
-  next unless File.readable?(group_file)
-
-  group_quotas = JSON.parse(File.read(group_file))
-  next unless group_quotas['vast'].select { |k, v| v['hard_limit'].to_i > 0 || v['hard_limit_inodes'].to_i > 0 }.count > 0
+MSI.group_quotas.each do |group, group_quota|
+  next unless group_quota['vast'].select { |k, v| v['hard_limit'].to_i > 0 || v['hard_limit_inodes'].to_i > 0 }.count > 0
   
 %>
     <span class="list-group-item d-flex align-items-center mb-0 header">
@@ -123,7 +112,7 @@ groups.each do |group|
       </a>
     </span>
 <%
-  if (standard = group_quotas['vast'].fetch('/msicore/projects/standard', nil))
+  if (standard = group_quota['vast'].fetch('/msicore/projects/standard', nil))
 %>
     <span class="list-group-item d-flex flex-column align-items-start mb-0 header" style="background-color: white;">
       <label class="mb-2 fw-bold">Project</label>
@@ -133,7 +122,7 @@ groups.each do |group|
 <% 
   end
 
-  if (scratch = group_quotas['vast'].fetch('/msicore/scratch', nil))
+  if (scratch = group_quota['vast'].fetch('/msicore/scratch', nil))
 %>
     <span class="list-group-item d-flex flex-column align-items-start mb-0 header" style="background-color: white;">
       <label class="mb-2 fw-bold">Scratch</label>
