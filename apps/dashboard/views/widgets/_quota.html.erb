@@ -49,7 +49,7 @@ end
 -%>
 
 
-<% user_quotas = JSON.parse(File.read("/common/hpc/bake-quota/user/#{user}.json")) %>
+<% user_quotas = JSON.parse(File.read("/common/hpc/bake/quota/user/#{user}.json")) %>
 
 <div class="card system-and-shared-apps-header">
   <div class="card-header">
@@ -85,7 +85,7 @@ end
 <% 
 
 groups.each do |group|
-  group_file = "/common/hpc/bake-quota/group/#{group}.json"
+  group_file = "/common/hpc/bake/quota/group/#{group}.json"
   next unless File.readable?(group_file)
 
   group_quotas = JSON.parse(File.read(group_file))
