@@ -91,7 +91,7 @@ if MSI.user_quotas['tier2'] != nil
     </span>
 
     <span class="list-group-item d-flex flex-column align-items-center mb-0 header" style="background-color: white;">
-      <%= emit_usage('Data', MSI.user_quotas['tier2']['size_kb'], MSI.user_quotas['tier2']['max_size_kb']).html_safe %>
+      <%= emit_usage('Data', MSI.user_quotas['tier2']['size_kb'] * 1024, MSI.user_quotas['tier2']['max_size_kb'] * 1024).html_safe %>
     </span>
 <%
 end
