@@ -14,12 +14,12 @@ msg: |
         # Check data usage
         if quota['hard_limit'].to_i > 0
           usage_pct = (quota['used_capacity'].to_f / quota['hard_limit'] * 100).to_i
-          over_limit << "#{Dir.home} (data: #{usage_pct}%)" if usage_pct > 10
+          over_limit << "#{Dir.home} (data: #{usage_pct}%)" if usage_pct > 90
         end
         # Check file usage
         if quota['hard_limit_inodes'].to_i > 0
           inode_pct = (quota['used_inodes'].to_f / quota['hard_limit_inodes'] * 100).to_i
-          over_limit << "#{Dir.home} (files: #{inode_pct}%)" if inode_pct > 10
+          over_limit << "#{Dir.home} (files: #{inode_pct}%)" if inode_pct > 90
         end
       end
     end
@@ -28,7 +28,7 @@ msg: |
       tier2 = user_quotas['tier2']
       if tier2['max_size_kb'].to_i > 0
         usage_pct = (tier2['size_kb'].to_f / tier2['max_size_kb'] * 100).to_i
-        over_limit << "**Tier 2** (data: #{usage_pct}%)" if usage_pct > 10
+        over_limit << "**Tier 2** (data: #{usage_pct}%)" if usage_pct > 90
       end
     end
 
@@ -39,12 +39,12 @@ msg: |
           # Check data usage
           if quota['hard_limit'].to_i > 0
             usage_pct = (quota['used_capacity'].to_f / quota['hard_limit'] * 100).to_i
-            over_limit << "#{path.delete_prefix('/msicore')}/#{group} (data: #{usage_pct}%)" if usage_pct > 10
+            over_limit << "#{path.delete_prefix('/msicore')}/#{group} (data: #{usage_pct}%)" if usage_pct > 90
           end
           # Check file usage
           if quota['hard_limit_inodes'].to_i > 0
             inode_pct = (quota['used_inodes'].to_f / quota['hard_limit_inodes'] * 100).to_i
-            over_limit << "#{path.delete_prefix('/msicore')}/#{group} (files: #{inode_pct}%)" if inode_pct > 10
+            over_limit << "#{path.delete_prefix('/msicore')}/#{group} (files: #{inode_pct}%)" if inode_pct > 90
           end
         end
       end
