@@ -61,7 +61,7 @@ msg: |
   %>
 
   <% if over_limit.any? %>
-  ⚠️ **Warning**: Your have storage utilizations that are overQUOTA_THRESHOLD% on the following paths:
+  ⚠️ **Warning**: You have storage utilizations that are over <%= QUOTA_THRESHOLD %>% on the following paths:
   <% over_limit.each do |item| %>
   - <%= item %>
   <% end %>
