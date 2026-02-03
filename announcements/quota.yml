@@ -2,36 +2,36 @@ type: warning
 dismissible: true
 id: quota_<%= Time.now.strftime('%Y%W') %>
 msg: |
-  <% 
+  <%
     user_quotas = MSI.user_quotas
     group_quotas = MSI.group_quotas
-    
+
     over_limit = []
-    
+
     # Check user quotas
     if user_quotas['vast']
       user_quotas['vast'].each do |path, quota|
         # Check data usage
         if quota['hard_limit'].to_i > 0
           usage_pct = (quota['used_capacity'].to_f / quota['hard_limit'] * 100).to_i
-          over_limit << "#{path} (data: #{usage_pct}%)" if usage_pct > 90
+          over_limit << "#{Dir.home} (data: #{usage_pct}%)" if usage_pct > 10
         end
         # Check file usage
         if quota['hard_limit_inodes'].to_i > 0
           inode_pct = (quota['used_inodes'].to_f / quota['hard_limit_inodes'] * 100).to_i
-          over_limit << "#{path} (files: #{inode_pct}%)" if inode_pct > 90
+          over_limit << "#{Dir.home} (files: #{inode_pct}%)" if inode_pct > 10
         end
       end
     end
-    
+
     if user_quotas['tier2']
       tier2 = user_quotas['tier2']
       if tier2['max_size_kb'].to_i > 0
         usage_pct = (tier2['size_kb'].to_f / tier2['max_size_kb'] * 100).to_i
-        over_limit << "**Tier 2** (data: #{usage_pct}%)" if usage_pct > 90
+        over_limit << "**Tier 2** (data: #{usage_pct}%)" if usage_pct > 10
       end
     end
-    
+
     # Check group quotas
     group_quotas.each do |group, quotas|
       if quotas['vast']
@@ -39,18 +39,18 @@ msg: |
           # Check data usage
           if quota['hard_limit'].to_i > 0
             usage_pct = (quota['used_capacity'].to_f / quota['hard_limit'] * 100).to_i
-            over_limit << "**[Group #{group}]** #{path} (data: #{usage_pct}%)" if usage_pct > 90
+            over_limit << "#{path.delete_prefix('/msicore')}/#{group} (data: #{usage_pct}%)" if usage_pct > 10
           end
           # Check file usage
           if quota['hard_limit_inodes'].to_i > 0
             inode_pct = (quota['used_inodes'].to_f / quota['hard_limit_inodes'] * 100).to_i
-            over_limit << "**[Group #{group}]** #{path} (files: #{inode_pct}%)" if inode_pct > 90
+            over_limit << "#{path.delete_prefix('/msicore')}/#{group} (files: #{inode_pct}%)" if inode_pct > 10
           end
         end
       end
     end
   %>
-  
+
   <% if over_limit.any? %>
   ⚠️ **Warning**: Your have storage utilizations that are over 90% on the following paths:
   <% over_limit.each do |item| %>
