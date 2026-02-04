@@ -1,0 +1,81 @@
+<%
+
+def get_fairshare(groups)
+
+  fairshare = {}
+
+  stdout = %x[sshare --accounts "#{groups.join(',')}" --parsable2 --noheader]
+
+  stdout.each_line do |line|
+    line = line.strip
+    next if line.empty?
+
+    # parsable2 format:
+    # Account|User|RawShares|NormShares|RawUsage|EffectvUsage|Fairshare
+    fields = line.split("|", -1)
+
+    acct = fields[0]
+    user = fields[1]
+    ns   = fields[3]
+    eu   = fields[5]
+
+    next unless acct && ns && eu
+
+    # account-level rows: User is empty
+    next unless user.nil? || user.empty?
+
+    ns_f = ns.to_f
+    eu_f = eu.to_f
+    next if eu_f == 0.0
+
+    fairshare[acct] = (eu_f / ns_f * 100).to_i
+  end
+  
+  return fairshare
+
+end
+
+gids = Process.groups + [Process.gid]
+groups = gids.uniq.map { |g| Etc.getgrgid(g).name }
+
+fairshare = get_fairshare(groups)
+-%>
+
+
+<div class="card system-and-shared-apps-header">
+  <div class="card-header">
+    Fairshare Usage
+  </div>
+  <div class="list-group list-group-flush">
+  <span class="list-group-item d-fl;ex align-items-center mb-0 header">
+    <a href="https://msi.umn.edu/our-resources/slurm-scheduler/fairshare" target="_blank" syle="font-size: .6rem;">
+      How this impacts jobs ↗
+    </a>
+  </span>
+<% 
+fairshare.each do |account, usage|
+
+  bgtype = if usage > 90
+    "bg-danger"
+  elsif usage > 75
+    "bg-warning"
+  else
+    "bg-success"
+  end
+    
+%>
+
+
+    <span class="list-group-item d-flex align-items-center mb-0 header" style="background-color: white;">
+      <label class="flex-grow-1 mb-0"><%= account %></label>
+      <span class="progress w-25">
+        <div class="progress-bar progress-bar-striped <%= bgtype %>" role="progressbar" style="width: <%= usage %>%;" aria-valuenow="<%= usage %>" aria-valuemin="0" aria-valuemax="100"></div>
+      </span>
+      <span class="text-end" style="width: 2.5rem; display:inline-block"><%= usage %>%</span>
+
+    </span>
+
+<% end %>
+
+  </div>
+</div>

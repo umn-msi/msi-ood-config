@@ -1,0 +1,138 @@
+<%
+
+# number_to_human_size uses base-2, but we allocate and repot
+# storage in base-10. There used to be a `si` prefix for
+# number_to_human_size, but they removed it..
+def human_size_decimal(bytes, precision: 1)
+  units = %w[B KB MB GB TB PB EB ZB YB]
+  bytes = bytes.to_f
+  return "0 B" if bytes <= 0
+
+  exp = (Math.log(bytes) / Math.log(1000)).floor
+  exp = [exp, units.length - 1].min
+
+  value = bytes / (1000 ** exp)
+
+  formatted =
+    if value >= 10 || exp == 0
+      value.round.to_i.to_s
+    else
+      format("%.#{precision}f", value)
+    end
+
+  "#{formatted} #{units[exp]}"
+end
+
+def emit_usage(label, usage, limit)
+
+  # avoid Infinity exceptions
+  return "" if limit.nil? || limit == 0
+
+  usage_percent = (usage.to_f / limit * 100).to_i
+
+  usage_bgtype = if usage_percent > 90
+    "bg-danger"
+  elsif usage_percent > 75
+    "bg-warning"
+  else
+    "bg-success"
+  end
+
+  title = if label == 'Data'
+    "#{human_size_decimal(usage)} / #{human_size_decimal(limit)}"
+  else
+    "#{number_with_delimiter(usage)} / #{number_with_delimiter(limit)}"
+  end
+
+  return <<-HTML
+
+  <div class="quota-row w-100" title="#{title}">
+    <span class="quota-label"><span class="tree">└─</span> #{label}</span>
+    <span class="progress quota-bar">
+      <div class="progress-bar progress-bar-striped #{usage_bgtype}"
+           role="progressbar"
+           style="width: #{usage_percent}%;"
+           aria-valuenow="#{usage_percent}"
+           aria-valuemin="0"
+           aria-valuemax="100"></div>
+    </span>
+    <span class="quota-pct">#{usage_percent}%</span>
+  </div>
+
+
+  HTML
+
+
+end
+-%>
+
+<div class="card system-and-shared-apps-header">
+  <div class="card-header">
+    Quota Usage
+  </div>
+  <div class="list-group list-group-flush">
+
+
+    <span class="list-group-item d-flex align-items-center mb-0 header">
+      <label class="flex-grow-1 mb-0 fw-semibold text-dark">Home Directory</label>
+    </span>
+
+    <span class="list-group-item d-flex flex-column align-items-center mb-0 header" style="background-color: white;">
+      <% homedir = MSI.user_quotas['vast']['/msicore/users'] %>
+      <%= emit_usage('Data', homedir['used_capacity'], homedir['hard_limit']).html_safe %>
+      <%= emit_usage('Files', homedir['used_inodes'], homedir['hard_limit_inodes']).html_safe %>
+    </span>
+
+<% 
+if MSI.user_quotas['tier2'] != nil
+%>
+    <span class="list-group-item d-flex align-items-center mb-0 header">
+      <label class="flex-grow-1 mb-0 fw-semibold text-dark">Personal Tier 2</label>
+    </span>
+
+    <span class="list-group-item d-flex flex-column align-items-center mb-0 header" style="background-color: white;">
+      <%= emit_usage('Data', MSI.user_quotas['tier2']['size_kb'] * 1024, MSI.user_quotas['tier2']['max_size_kb'] * 1024).html_safe %>
+    </span>
+<%
+end
+%>
+
+<% 
+
+MSI.group_quotas.each do |group, group_quota|
+  next unless group_quota['vast'].select { |k, v| v['hard_limit'].to_i > 0 || v['hard_limit_inodes'].to_i > 0 }.count > 0
+  
+%>
+    <span class="list-group-item d-flex align-items-center mb-0 header">
+      <label class="flex-grow-1 mb-0 fw-semibold text-dark">
+        <%= group %>
+      </label>
+      <a href="https://mymsi.msi.umn.edu/project/<%= group %>/storage" target="_blank" class="ms-auto text-decoration-none" style="font-size: 0.6rem;">
+        MyMSI Dashboard↗
+      </a>
+    </span>
+<%
+  if (standard = group_quota['vast'].fetch('/msicore/projects/standard', nil))
+%>
+    <span class="list-group-item d-flex flex-column align-items-start mb-0 header" style="background-color: white;">
+      <label class="mb-2 fw-bold">Project</label>
+      <%= emit_usage('Data', standard['used_capacity'], standard['hard_limit']).html_safe %>
+      <%= emit_usage('Files', standard['used_inodes'], standard['hard_limit_inodes']).html_safe %>
+    </span>
+<% 
+  end
+
+  if (scratch = group_quota['vast'].fetch('/msicore/scratch', nil))
+%>
+    <span class="list-group-item d-flex flex-column align-items-start mb-0 header" style="background-color: white;">
+      <label class="mb-2 fw-bold">Scratch</label>
+      <%= emit_usage('Data', scratch['used_capacity'], scratch['hard_limit']).html_safe %>
+      <%= emit_usage('Files', scratch['used_inodes'], scratch['hard_limit_inodes']).html_safe %>
+    </span>
+<%
+  end
+end 
+%>
+
+  </div>
+</div>

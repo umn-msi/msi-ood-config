@@ -1,0 +1,69 @@
+type: warning
+dismissible: true
+id: quota_<%= Time.now.strftime('%Y%W') %>
+msg: |
+  <%
+    QUOTA_THRESHOLD = 90
+
+    user_quotas = MSI.user_quotas
+    group_quotas = MSI.group_quotas
+
+    over_limit = []
+
+    # Check user quotas
+    if user_quotas['vast']
+      user_quotas['vast'].each do |path, quota|
+        # Check data usage
+        if quota['hard_limit'].to_i > 0
+          usage_pct = (quota['used_capacity'].to_f / quota['hard_limit'] * 100).to_i
+          over_limit << "#{Dir.home} (data: #{usage_pct}%)" if usage_pct > QUOTA_THRESHOLD
+        end
+        # Check file usage
+        if quota['hard_limit_inodes'].to_i > 0
+          inode_pct = (quota['used_inodes'].to_f / quota['hard_limit_inodes'] * 100).to_i
+          over_limit << "#{Dir.home} (files: #{inode_pct}%)" if inode_pct > QUOTA_THRESHOLD
+        end
+      end
+    end
+
+    if user_quotas['tier2']
+      tier2 = user_quotas['tier2']
+      if tier2['max_size_kb'].to_i > 0
+        usage_pct = (tier2['size_kb'].to_f / tier2['max_size_kb'] * 100).to_i
+        over_limit << "**Tier 2** (data: #{usage_pct}%)" if usage_pct > QUOTA_THRESHOLD
+      end
+    end
+
+    # Check group quotas
+    group_quotas.each do |group, quotas|
+      if quotas['vast']
+        quotas['vast'].each do |path, quota|
+          _path = if path.include? "scratch"
+            path.delete_prefix('/msicore')
+          elsif path.include? "projects_regulated"
+            "/projects/regulated/#{group}"
+          else
+            "#{path.delete_prefix('/msicore')}/#{group}"
+          end
+          # Check data usage
+          if quota['hard_limit'].to_i > 0
+            usage_pct = (quota['used_capacity'].to_f / quota['hard_limit'] * 100).to_i
+            over_limit << "#{_path} (data: #{usage_pct}%)" if usage_pct > QUOTA_THRESHOLD
+          end
+          # Check file usage
+          if quota['hard_limit_inodes'].to_i > 0
+            inode_pct = (quota['used_inodes'].to_f / quota['hard_limit_inodes'] * 100).to_i
+            over_limit << "#{_path} (files: #{inode_pct}%)" if inode_pct > QUOTA_THRESHOLD
+          end
+        end
+      end
+    end
+  %>
+
+  <% if over_limit.any? %>
+  ⚠️ **Warning**: You have storage utilizations that are over <%= QUOTA_THRESHOLD %>% on the following paths:
+  <% over_limit.each do |item| %>
+  - <%= item %>
+  <% end %>
+  Please delete unnecessary files to avoid issues.
+  <% end %>
