@@ -39,7 +39,7 @@ msg: |
       if quotas['vast']
         quotas['vast'].each do |path, quota|
           _path = if path.include? "scratch"
-            path.delete_prefix('/msicore')
+            "#{path.delete_prefix('/msicore')} [#{group}]"
           elsif path.include? "projects_regulated"
             "/projects/regulated/#{group}"
           else
