@@ -6,7 +6,7 @@ Open OnDemand will hide the Interactive Apps menu from the interface when the pr
 
 Open OnDemand (OOD) is a web-based portal for :
 
-* Interactive access to MSI's compute cluster, see Interactive Apps
+* Interactive access to MSI's compute cluster, see [Interactive Apps](https://ondemand.msi.umn.edu/pun/sys/dashboard/batch_connect/sessions)
 * Access and Transfer your MSI files, see [Files](https://ondemand.msi.umn.edu/pun/sys/dashboard/files/)
 * Remote shell to our compute cluster, see [Agate Shell Access](https://ondemand.msi.umn.edu/pun/sys/shell/ssh/agate.msi.umn.edu)
 * Familiar interactive development environments that have been adapted to use the Open OnDemand platform.
