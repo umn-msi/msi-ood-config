@@ -99,7 +99,7 @@ end
 
 <% 
 
-MSI.group_quotas.each do |group, group_quota|
+MSI.group_quotas.sort_by { |group, _group_quota| group.to_s.downcase }.each do |group, group_quota|
   next unless group_quota['vast'].select { |k, v| v['hard_limit'].to_i > 0 || v['hard_limit_inodes'].to_i > 0 }.count > 0
   
 %>
