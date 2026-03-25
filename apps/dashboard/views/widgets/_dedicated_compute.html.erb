@@ -298,7 +298,7 @@ condo_partitions = parse_condo_partitions()
           </div>
           <div class="dc-summary-card">
             <div class="dc-big"><%= pct(alloc_cpus, total_cpus) %>%</div>
-            <div class="dc-label">CPU Utilisation</div>
+            <div class="dc-label">CPU Utilization</div>
             <div class="progress mt-1" style="height: 6px;">
               <div class="progress-bar <%= pct_bar_class(pct(alloc_cpus, total_cpus)) %>"
                    style="width: <%= pct(alloc_cpus, total_cpus) %>%;" role="progressbar"></div>
@@ -307,7 +307,7 @@ condo_partitions = parse_condo_partitions()
           </div>
           <div class="dc-summary-card">
             <div class="dc-big"><%= pct(alloc_mem, total_mem) %>%</div>
-            <div class="dc-label">Memory Utilisation</div>
+            <div class="dc-label">Memory Utilization</div>
             <div class="progress mt-1" style="height: 6px;">
               <div class="progress-bar <%= pct_bar_class(pct(alloc_mem, total_mem)) %>"
                    style="width: <%= pct(alloc_mem, total_mem) %>%;" role="progressbar"></div>
@@ -317,7 +317,7 @@ condo_partitions = parse_condo_partitions()
           <% if has_gpus %>
             <div class="dc-summary-card">
               <div class="dc-big"><%= pct(alloc_gpus, total_gpus) %>%</div>
-              <div class="dc-label">GPU Utilisation</div>
+              <div class="dc-label">GPU Utilization</div>
               <div class="progress mt-1" style="height: 6px;">
                 <div class="progress-bar <%= pct_bar_class(pct(alloc_gpus, total_gpus)) %>"
                      style="width: <%= pct(alloc_gpus, total_gpus) %>%;" role="progressbar"></div>
