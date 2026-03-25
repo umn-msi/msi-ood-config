@@ -1,0 +1,462 @@
+<%
+#
+# Dedicated Compute (Condo) Partitions Widget
+#
+# Parses /etc/slurm/slurm.conf for partitions with QOS=condo, checks if the
+# current user belongs to any of the AllowGroups, and displays job queue and
+# node state information for accessible partitions.
+#
+
+require 'set'
+require 'shellwords'
+
+def parse_condo_partitions
+  slurm_conf = '/etc/slurm/slurm.conf'
+  return [] unless File.readable?(slurm_conf)
+
+  gids = Process.groups + [Process.gid]
+  user_groups = gids.uniq.map { |g| Etc.getgrgid(g).name rescue nil }.compact.to_set
+
+  partitions = []
+
+  File.foreach(slurm_conf) do |line|
+    line = line.strip
+    next unless line.start_with?('PartitionName=')
+    next unless line.match?(/\bQOS=condo\b/i)
+
+    name_match = line.match(/PartitionName=(\S+)/)
+    next unless name_match
+    partition_name = name_match[1]
+
+    groups_match = line.match(/AllowGroups=(\S+)/)
+    next unless groups_match
+
+    allowed = groups_match[1].split(',')
+    if allowed.any? { |g| user_groups.include?(g) }
+      partitions << partition_name
+    end
+  end
+
+  partitions.sort
+end
+
+# Fetch all jobs once, return a Hash keyed by partition name.
+# Each value is { running: [], pending: [], other: [] }.
+def fetch_all_jobs(partitions)
+  part_set = partitions.to_set
+  safe_list = partitions.map { |p| Shellwords.shellescape(p) }.join(',')
+  raw = %x[squeue -p #{safe_list} -hO "Partition:|,JobID:|,Name:40|,UserName:|,State:|,TimeUsed:|,NumNodes:|,NumCPUs:|,ReasonList:50|" 2>/dev/null]
+
+  result = partitions.each_with_object({}) { |p, h| h[p] = { running: [], pending: [], other: [] } }
+
+  raw.each_line do |line|
+    fields = line.strip.split('|').map(&:strip)
+    next if fields.length < 9
+
+    part = fields[0]
+    # squeue may return a trailing '*' on the partition name for the default
+    part = part.chomp('*')
+    next unless part_set.include?(part)
+
+    job = {
+      id:     fields[1],
+      name:   fields[2],
+      user:   fields[3],
+      state:  fields[4],
+      time:   fields[5],
+      nodes:  fields[6],
+      cpus:   fields[7],
+      reason: fields[8]
+    }
+
+    case job[:state]
+    when 'RUNNING'
+      result[part][:running] << job
+    when 'PENDING'
+      result[part][:pending] << job
+    else
+      result[part][:other] << job
+    end
+  end
+
+  result
+end
+
+# Fetch all node info once, return a Hash keyed by partition name.
+# Each value is an Array of node hashes.
+def fetch_all_nodes(partitions)
+  part_set = partitions.to_set
+  safe_list = partitions.map { |p| Shellwords.shellescape(p) }.join(',')
+  raw = %x[sinfo -p #{safe_list} -hNO "Partition:|,NodeHost:|,StateLong:|,CPUsState:|,Memory:|,AllocMem:|,Gres:|,GresUsed:" 2>/dev/null]
+
+  result = partitions.each_with_object({}) { |p, h| h[p] = [] }
+
+  raw.each_line do |line|
+    fields = line.strip.split('|').map(&:strip)
+    next if fields.length < 8
+
+    part = fields[0].chomp('*')
+    next unless part_set.include?(part)
+
+    cpu_parts = fields[3].split('/')
+
+    gres_str = fields[6]
+    gres_used_str = fields[7]
+
+    gpu_total = 0
+    gpu_type  = nil
+    if m = gres_str.match(/gpu:(\w+):(\d+)/)
+      gpu_type  = m[1]
+      gpu_total = m[2].to_i
+    elsif m = gres_str.match(/gpu:(\d+)/)
+      gpu_total = m[1].to_i
+    end
+
+    gpu_alloc = 0
+    if m = gres_used_str.match(/gpu:\w+:(\d+)/)
+      gpu_alloc = m[1].to_i
+    elsif m = gres_used_str.match(/gpu:(\d+)/)
+      gpu_alloc = m[1].to_i
+    end
+
+    result[part] << {
+      name:        fields[1],
+      state:       fields[2],
+      alloc_cpus:  cpu_parts[0].to_i,
+      idle_cpus:   cpu_parts[1].to_i,
+      other_cpus:  cpu_parts[2].to_i,
+      total_cpus:  cpu_parts[3].to_i,
+      total_mem_mb: fields[4].to_i,
+      alloc_mem_mb: fields[5].to_i,
+      gpu_type:    gpu_type,
+      gpu_total:   gpu_total,
+      gpu_alloc:   gpu_alloc
+    }
+  end
+
+  result
+end
+
+def state_badge(state)
+  css = case state.downcase
+        when /\Aidle/                    then 'bg-success'
+        when /\Amixed/                   then 'bg-warning text-dark'
+        when /\Aalloc/                   then 'bg-primary'
+        when /drain|down|fail/           then 'bg-danger'
+        when /resv/                      then 'bg-info text-dark'
+        else                                  'bg-secondary'
+        end
+  "<span class=\"badge #{css}\">#{ERB::Util.html_escape(state)}</span>"
+end
+
+def human_mem(mb)
+  if mb >= 1024
+    "%.1f GB" % (mb / 1024.0)
+  else
+    "#{mb} MB"
+  end
+end
+
+def pct(n, d)
+  return 0 if d == 0
+  (n.to_f / d * 100).round
+end
+
+def pct_bar_class(percent)
+  if percent > 90
+    'bg-danger'
+  elsif percent > 75
+    'bg-warning'
+  else
+    'bg-success'
+  end
+end
+
+condo_partitions = parse_condo_partitions()
+-%>
+
+<% if condo_partitions.empty? %>
+
+<div class="card">
+  <div class="card-header bg-secondary text-white">
+    <strong>Dedicated Compute</strong>
+  </div>
+  <div class="card-body text-muted">
+    You do not have access to any dedicated compute (condo) partitions.
+  </div>
+</div>
+
+<% else %>
+
+<style>
+  .dc-job-table {
+    font-size: 0.85rem;
+  }
+  .dc-job-table th {
+    position: sticky;
+    top: 0;
+    background: #f8f9fa;
+    z-index: 1;
+  }
+  .dc-scroll {
+    max-height: 22rem;
+    overflow-y: auto;
+  }
+  .dc-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    gap: 1rem;
+  }
+  .dc-summary-card {
+    text-align: center;
+    padding: 0.75rem;
+    border-radius: 0.375rem;
+    background: #f8f9fa;
+  }
+  .dc-summary-card .dc-big {
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  .dc-summary-card .dc-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+  }
+  .dc-node-table {
+    font-size: 0.85rem;
+  }
+</style>
+
+<div class="card">
+  <div class="card-header bg-dark text-white d-flex align-items-center">
+    <strong class="me-3">Dedicated Compute</strong>
+
+    <% if condo_partitions.length > 1 %>
+      <ul class="nav nav-pills ms-auto mb-0" id="dc-partition-tabs" role="tablist">
+        <% condo_partitions.each_with_index do |part, idx| %>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link py-1 px-3 <%= 'active' if idx == 0 %> text-white"
+                    id="dc-tab-<%= part %>"
+                    data-bs-toggle="pill"
+                    data-bs-target="#dc-pane-<%= part %>"
+                    type="button" role="tab"
+                    aria-controls="dc-pane-<%= part %>"
+                    aria-selected="<%= idx == 0 %>">
+              <%= part %>
+            </button>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+  </div>
+
+  <div class="card-body">
+    <div class="tab-content" id="dc-partition-content">
+    <%
+      all_jobs  = fetch_all_jobs(condo_partitions)
+      all_nodes = fetch_all_nodes(condo_partitions)
+
+      condo_partitions.each_with_index do |part, idx|
+        jobs  = all_jobs[part]
+        nodes = all_nodes[part]
+
+        total_cpus = nodes.sum { |n| n[:total_cpus] }
+        alloc_cpus = nodes.sum { |n| n[:alloc_cpus] }
+        total_mem  = nodes.sum { |n| n[:total_mem_mb] }
+        alloc_mem  = nodes.sum { |n| n[:alloc_mem_mb] }
+        total_gpus = nodes.sum { |n| n[:gpu_total] }
+        alloc_gpus = nodes.sum { |n| n[:gpu_alloc] }
+        has_gpus   = total_gpus > 0
+
+        idle_nodes  = nodes.count { |n| n[:state].downcase.start_with?('idle') }
+        alloc_nodes = nodes.count { |n| n[:state].downcase =~ /\A(alloc|mixed)/ }
+        down_nodes  = nodes.count { |n| n[:state].downcase =~ /down|drain|fail/ }
+    %>
+
+      <div class="tab-pane fade <%= 'show active' if idx == 0 %>"
+           id="dc-pane-<%= part %>"
+           role="tabpanel"
+           aria-labelledby="dc-tab-<%= part %>">
+
+        <% if condo_partitions.length == 1 %>
+          <h5 class="mb-3"><%= part %></h5>
+        <% end %>
+
+        <!-- ── Partition Summary ── -->
+        <div class="dc-summary-grid mb-4">
+          <div class="dc-summary-card">
+            <div class="dc-big"><%= nodes.length %></div>
+            <div class="dc-label">Total Nodes</div>
+          </div>
+          <div class="dc-summary-card">
+            <div class="dc-big"><%= jobs[:running].length %></div>
+            <div class="dc-label">Running Jobs</div>
+          </div>
+          <div class="dc-summary-card">
+            <div class="dc-big"><%= jobs[:pending].length %></div>
+            <div class="dc-label">Pending Jobs</div>
+          </div>
+          <div class="dc-summary-card">
+            <div class="dc-big"><%= pct(alloc_cpus, total_cpus) %>%</div>
+            <div class="dc-label">CPU Utilisation</div>
+            <div class="progress mt-1" style="height: 6px;">
+              <div class="progress-bar <%= pct_bar_class(pct(alloc_cpus, total_cpus)) %>"
+                   style="width: <%= pct(alloc_cpus, total_cpus) %>%;" role="progressbar"></div>
+            </div>
+            <div class="dc-label mt-1"><%= alloc_cpus %> / <%= total_cpus %> cores</div>
+          </div>
+          <div class="dc-summary-card">
+            <div class="dc-big"><%= pct(alloc_mem, total_mem) %>%</div>
+            <div class="dc-label">Memory Utilisation</div>
+            <div class="progress mt-1" style="height: 6px;">
+              <div class="progress-bar <%= pct_bar_class(pct(alloc_mem, total_mem)) %>"
+                   style="width: <%= pct(alloc_mem, total_mem) %>%;" role="progressbar"></div>
+            </div>
+            <div class="dc-label mt-1"><%= human_mem(alloc_mem) %> / <%= human_mem(total_mem) %></div>
+          </div>
+          <% if has_gpus %>
+            <div class="dc-summary-card">
+              <div class="dc-big"><%= pct(alloc_gpus, total_gpus) %>%</div>
+              <div class="dc-label">GPU Utilisation</div>
+              <div class="progress mt-1" style="height: 6px;">
+                <div class="progress-bar <%= pct_bar_class(pct(alloc_gpus, total_gpus)) %>"
+                     style="width: <%= pct(alloc_gpus, total_gpus) %>%;" role="progressbar"></div>
+              </div>
+              <div class="dc-label mt-1"><%= alloc_gpus %> / <%= total_gpus %> GPUs</div>
+            </div>
+          <% end %>
+        </div>
+
+        <!-- ── Job Queue ── -->
+        <div class="row g-3 mb-4">
+          <!-- Running Jobs -->
+          <div class="col-lg-6">
+            <h6 class="fw-semibold">
+              <span class="badge bg-success me-1"><%= jobs[:running].length %></span> Running Jobs
+            </h6>
+            <% if jobs[:running].empty? %>
+              <p class="text-muted fst-italic">No running jobs.</p>
+            <% else %>
+              <div class="dc-scroll border rounded">
+                <table class="table table-sm table-striped dc-job-table mb-0">
+                  <thead>
+                    <tr>
+                      <th>Job ID</th>
+                      <th>Name</th>
+                      <th>User</th>
+                      <th>Time</th>
+                      <th>Nodes</th>
+                      <th>CPUs</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% jobs[:running].each do |j| %>
+                      <tr>
+                        <td><%= j[:id] %></td>
+                        <td title="<%= ERB::Util.html_escape(j[:name]) %>"><%= j[:name].length > 28 ? j[:name][0..25] + '...' : j[:name] %></td>
+                        <td><%= j[:user] %></td>
+                        <td><%= j[:time] %></td>
+                        <td><%= j[:nodes] %></td>
+                        <td><%= j[:cpus] %></td>
+                      </tr>
+                    <% end %>
+                  </tbody>
+                </table>
+              </div>
+            <% end %>
+          </div>
+
+          <!-- Pending Jobs -->
+          <div class="col-lg-6">
+            <h6 class="fw-semibold">
+              <span class="badge bg-warning text-dark me-1"><%= jobs[:pending].length %></span> Pending Jobs
+            </h6>
+            <% if jobs[:pending].empty? %>
+              <p class="text-muted fst-italic">No pending jobs.</p>
+            <% else %>
+              <div class="dc-scroll border rounded">
+                <table class="table table-sm table-striped dc-job-table mb-0">
+                  <thead>
+                    <tr>
+                      <th>Job ID</th>
+                      <th>Name</th>
+                      <th>User</th>
+                      <th>CPUs</th>
+                      <th>Reason</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% jobs[:pending].each do |j| %>
+                      <tr>
+                        <td><%= j[:id] %></td>
+                        <td title="<%= ERB::Util.html_escape(j[:name]) %>"><%= j[:name].length > 28 ? j[:name][0..25] + '...' : j[:name] %></td>
+                        <td><%= j[:user] %></td>
+                        <td><%= j[:cpus] %></td>
+                        <td><%= j[:reason] %></td>
+                      </tr>
+                    <% end %>
+                  </tbody>
+                </table>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <!-- ── Node State ── -->
+        <h6 class="fw-semibold mb-2">Node Status</h6>
+        <div class="dc-scroll border rounded">
+          <table class="table table-sm table-striped dc-node-table mb-0">
+            <thead>
+              <tr>
+                <th>Node</th>
+                <th>State</th>
+                <th>CPUs (alloc/total)</th>
+                <th>Memory (alloc/total)</th>
+                <% if has_gpus %><th>GPUs (alloc/total)</th><% end %>
+              </tr>
+            </thead>
+            <tbody>
+              <% nodes.sort_by { |n| n[:name] }.each do |n| %>
+                <tr>
+                  <td><%= n[:name] %></td>
+                  <td><%= state_badge(n[:state]).html_safe %></td>
+                  <td>
+                    <%= n[:alloc_cpus] %> / <%= n[:total_cpus] %>
+                    <div class="progress" style="height: 4px;">
+                      <div class="progress-bar <%= pct_bar_class(pct(n[:alloc_cpus], n[:total_cpus])) %>"
+                           style="width: <%= pct(n[:alloc_cpus], n[:total_cpus]) %>%;" role="progressbar"></div>
+                    </div>
+                  </td>
+                  <td>
+                    <%= human_mem(n[:alloc_mem_mb]) %> / <%= human_mem(n[:total_mem_mb]) %>
+                    <div class="progress" style="height: 4px;">
+                      <div class="progress-bar <%= pct_bar_class(pct(n[:alloc_mem_mb], n[:total_mem_mb])) %>"
+                           style="width: <%= pct(n[:alloc_mem_mb], n[:total_mem_mb]) %>%;" role="progressbar"></div>
+                    </div>
+                  </td>
+                  <% if has_gpus %>
+                    <td>
+                      <%= n[:gpu_alloc] %> / <%= n[:gpu_total] %>
+                      <% if n[:gpu_total] > 0 %>
+                        <% if n[:gpu_type] %><span class="text-muted" style="font-size:0.75rem">(<%= n[:gpu_type] %>)</span><% end %>
+                        <div class="progress" style="height: 4px;">
+                          <div class="progress-bar <%= pct_bar_class(pct(n[:gpu_alloc], n[:gpu_total])) %>"
+                               style="width: <%= pct(n[:gpu_alloc], n[:gpu_total]) %>%;" role="progressbar"></div>
+                        </div>
+                      <% end %>
+                    </td>
+                  <% end %>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+
+      </div><!-- /tab-pane -->
+
+    <% end %>
+    </div><!-- /tab-content -->
+  </div><!-- /card-body -->
+</div><!-- /card -->
+
+<% end %>
