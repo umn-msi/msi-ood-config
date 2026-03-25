@@ -140,7 +140,7 @@ end
 def state_badge(state)
   css = case state.downcase
         when /\Aidle/                    then 'bg-success'
-        when /\Amixed/                   then 'bg-warning text-dark'
+        when /\Amixed/                   then 'bg-primary'
         when /\Aalloc/                   then 'bg-primary'
         when /drain|down|fail/           then 'bg-danger'
         when /resv/                      then 'bg-info text-dark'
