@@ -26,3 +26,7 @@
   text-align: right;
   font-weight: 600;
 }
+
+.announcement-body p {
+    margin-bottom: 0;
+}
