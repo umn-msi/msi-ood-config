@@ -101,7 +101,8 @@ end
 <% 
 
 MSI.group_quotas.sort_by { |group, _group_quota| group.to_s.downcase }.each do |group, group_quota|
-  next unless group_quota['vast'].select { |k, v| v['hard_limit'].to_i > 0 || v['hard_limit_inodes'].to_i > 0 }.count > 0
+  # hard_limit of 1000 or hard_limit_inodes of 1 is the default and means group has no allocation
+  next unless group_quota['vast'].select { |k, v| v['hard_limit'].to_i > 1000 || v['hard_limit_inodes'].to_i > 1 }.count > 0
   
 %>
     <span class="list-group-item d-flex align-items-center mb-0 header">
