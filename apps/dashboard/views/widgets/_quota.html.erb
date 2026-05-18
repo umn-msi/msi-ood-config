@@ -84,7 +84,7 @@ end
       <%= emit_usage('Files', homedir['used_inodes'], homedir['hard_limit_inodes']).html_safe %>
     </span>
 
-<% 
+<%
 if MSI.user_quotas['tier2'] != nil
 %>
     <span class="list-group-item d-flex align-items-center mb-0 header">
@@ -98,12 +98,12 @@ if MSI.user_quotas['tier2'] != nil
 end
 %>
 
-<% 
+<%
 
 MSI.group_quotas.sort_by { |group, _group_quota| group.to_s.downcase }.each do |group, group_quota|
   # hard_limit of 1000 or hard_limit_inodes of 1 is the default and means group has no allocation
   next unless group_quota['vast'].select { |k, v| v['hard_limit'].to_i > 1000 || v['hard_limit_inodes'].to_i > 1 }.count > 0
-  
+
 %>
     <span class="list-group-item d-flex align-items-center mb-0 header">
       <label class="flex-grow-1 mb-0 fw-semibold text-dark">
@@ -121,7 +121,17 @@ MSI.group_quotas.sort_by { |group, _group_quota| group.to_s.downcase }.each do |
       <%= emit_usage('Data', standard['used_capacity'], standard['hard_limit']).html_safe %>
       <%= emit_usage('Files', standard['used_inodes'], standard['hard_limit_inodes']).html_safe %>
     </span>
-<% 
+<%
+  end
+
+  if (regulated = group_quota['vast'].fetch('/global/projects_regulated', nil))
+%>
+    <span class="list-group-item d-flex flex-column align-items-start mb-0 header" style="background-color: white;">
+      <label class="mb-2 fw-bold">Project</label>
+      <%= emit_usage('Data', regulated['used_capacity'], regulated['hard_limit']).html_safe %>
+      <%= emit_usage('Files', regulated['used_inodes'], regulated['hard_limit_inodes']).html_safe %>
+    </span>
+<%
   end
 
   if (scratch = group_quota['vast'].fetch('/msicore/scratch', nil))
@@ -133,7 +143,7 @@ MSI.group_quotas.sort_by { |group, _group_quota| group.to_s.downcase }.each do |
     </span>
 <%
   end
-end 
+end
 %>
 
   </div>
