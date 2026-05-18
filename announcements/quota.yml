@@ -46,12 +46,12 @@ msg: |
             "#{path.delete_prefix('/msicore')}/#{group}"
           end
           # Check data usage
-          if quota['hard_limit'].to_i > 0
+          if quota['hard_limit'].to_i > 1000 # 1000 == no allocation
             usage_pct = (quota['used_capacity'].to_f / quota['hard_limit'] * 100).to_i
             over_limit << "#{_path} (data: #{usage_pct}%)" if usage_pct > QUOTA_THRESHOLD
           end
           # Check file usage
-          if quota['hard_limit_inodes'].to_i > 0
+          if quota['hard_limit_inodes'].to_i > 1 # 1 == no allocation
             inode_pct = (quota['used_inodes'].to_f / quota['hard_limit_inodes'] * 100).to_i
             over_limit << "#{_path} (files: #{inode_pct}%)" if inode_pct > QUOTA_THRESHOLD
           end
