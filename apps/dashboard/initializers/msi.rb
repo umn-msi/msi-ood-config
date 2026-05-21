@@ -121,37 +121,40 @@ class MSI
     return (self.next_maintenance - Time.now).to_i
   end
 
-  def self.quick_resources 
-    return {
-      # Format is partition:nodes:ntasks-per-node:memory:tmp:gpus
-      common: [
-      ],
-      agate: [
-        ['Interactive - 2 cores, 32 GB, 64 GB local scratch', 'interactive:1:2:32768:65536:0'],
-        ['Interactive Long - 2 cores, 32 GB, 64 GB local scratch', 'interactive-long:1:2:32768:65536:0'],
-        ['Interactive GPU - 16 cores, 60 GB, 100 GB local scratch, 1 A40', 'interactive-gpu:1:16:61440:102400:1'],
-        ['Big Mem - 32 cores, 500 GB, 190 GB local scratch', 'ag2tb:1:32:512000:194560:0'],
-      ],
-    }
+  GPU_PARTITION_NAMES = %w[interactive-gpu preempt-gpu msigpu].freeze
+
+  # Convenience wrapper: extracts the three gpu_model keys from a user_context
+  # hash and delegates to resolve_gpu_model.
+  def self.resolve_gpu_model_from_context(partition, ctx)
+    resolve_gpu_model(
+      partition,
+      interactive: ctx['gpu_model_interactive'],
+      other:       ctx['gpu_model_other'],
+      custom:      ctx['gpu_model_custom']
+    )
   end
-    
-  def self.partitions 
-    return { 
-      common: [
-        ['interactive', 'interactive'],
-        ['interactive-gpu', 'interactive-gpu'],
-        ['preempt', 'preempt'],
-        ['preempt-gpu', 'preempt-gpu'],
-        ['interactive-long', 'interactive-long'],
-      ],
-      agate: [
-        ['msismall', 'msismall'],
-        ['msilarge', 'msilarge'],
-        ['msilong', 'msilong'],
-        ['msigpu', 'msigpu'],
-        ['msibigmem', 'msibigmem'],
-      ],
-    }
+
+  # Returns the specific GPU model string for a given partition and the three
+  # gpu_model form values, or nil if "any" / blank.
+  def self.resolve_gpu_model(partition, interactive:, other:, custom:)
+    raw = if %w[interactive-gpu preempt-gpu].include?(partition)
+      interactive
+    elsif partition == 'msigpu'
+      other
+    else
+      custom
+    end
+    raw = raw.to_s
+    raw.empty? || raw == 'any' ? nil : raw
+  end
+
+  # Returns a human-readable time limit string from num_hours / custom_time.
+  def self.format_time_limit(num_hours, custom_time = nil)
+    case num_hours.to_s
+    when '0'  then custom_time.to_s
+    when '-1' then 'Until next maintenance'
+    else            "#{num_hours} hour(s)"
+    end
   end
 
 end
