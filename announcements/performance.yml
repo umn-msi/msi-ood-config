@@ -1,7 +1,0 @@
-<%- expire = Time.new(2026, 4, 24, 9, 0, 0) -%>
-type: warning
-dismissible: false
-msg: |
-  <%- if Time.now < expire -%>
-  MSI is rolling out an update to Agate to address the ongoing storage performance issue.  While this update is being rolled out you may experience longer queue times.  Queue times should be back to normal by Friday April 24th.
-  <% end %>
