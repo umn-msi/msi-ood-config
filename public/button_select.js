@@ -57,6 +57,18 @@ function styleSelectAsButtonGroup(fieldName, vertical) {
   select.after(wrapper);
 }
 
+function triggerSelectChange(fieldName) {
+  var select = $('#batch_connect_session_context_' + fieldName);
+  if (!select.length) return;
+  select.trigger('change');
+}
+
+function syncFormDependentVisibility() {
+  // Re-apply hide/show behavior from the currently selected options.
+  triggerSelectChange('resources');
+  triggerSelectChange('partitions');
+}
+
 $(document).ready(function () {
   styleSelectAsButtonGroup('gpu_model_interactive', false);
   styleSelectAsButtonGroup('gpu_model_other', false);
@@ -66,4 +78,11 @@ $(document).ready(function () {
   styleSelectAsButtonGroup('python', true);
   styleSelectAsButtonGroup('cuda_version', true);
   styleSelectAsButtonGroup('num_hours', true);
+
+  syncFormDependentVisibility();
+
+  // Safari can restore form values after ready; run one more pass.
+  setTimeout(syncFormDependentVisibility, 0);
 });
+
+$(window).on('pageshow', syncFormDependentVisibility);

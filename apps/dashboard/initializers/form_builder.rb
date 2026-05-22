@@ -316,13 +316,19 @@ class MSI
 			}
 
 			self.class.quick_resources.each do |resource|
-				gpus = resource[1].split(':')[5].to_i rescue 0
+				resource_parts = resource[1].split(':')
+				resource_partition = resource_parts[0]
+				gpus = resource_parts[5].to_i rescue 0
 				data_attrs = hide_manual_resource_fields.dup
 				if gpus > 0
 					# Show gpu_model_interactive (interactive-gpu hardware: A40/L40s).
 					# Gpus count is hidden — the preset value string fixes it at 1.
 					data_attrs['data-hide-gpu-model-interactive'] = false
 					data_attrs['data-hide-cuda-version'] = false
+					# Keep partitions and resources in sync for browser-restored state.
+					if self.class.partitions.include?(resource_partition)
+						data_attrs['data-set-partitions'] = resource_partition
+					end
 				else
 					# Reset partitions to a non-GPU value when a non-GPU preset is selected.
 					# This ensures that stale cached GPU partition options do not reveal
