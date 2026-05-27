@@ -198,7 +198,7 @@ class MSI
 				'num_hours' => {
 					'priority' => 980,
 					'label' => 'Time Limit',
-					'help' => 'Shorter times will probably start faster',
+					'help' => 'Shorter times will probably start faster. Only some partitions allow longer time limits.',
 					'widget' => 'select',
 					'options' => [
 						['1 Hours', 1, { 'data-hide-custom-time' => true }],
@@ -206,7 +206,12 @@ class MSI
 						['8 Hours', 8, { 'data-hide-custom-time' => true }],
 						['24 Hours', 24, { 'data-hide-custom-time' => true }],
 						['Custom', 0, { 'data-hide-custom-time' => false }],
-						['Until Next Maintenance', -1, { 'data-hide-custom-time' => true }],
+						['Until Next Maintenance', -1, {
+							'data-hide-custom-time'                       => true,
+							'data-alias-ilong'                            => 'interactive-long',
+							'data-exclusive-option-for-partitions-ilong'  => true,
+							'data-exclusive-option-for-partitions-custom' => true,
+						}],
 					],
 				},
 				'custom_time' => {
