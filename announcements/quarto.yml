@@ -1,9 +1,9 @@
 type: warning
 dismissible: true
 msg: >-
-  We patched a supply-chain attack in Quarto files on our RStudio server.
-  If you used Quarto before July 1, 2026 to generate HTML files, DISCARD
-  those potentially malicious files and recreate them with the newer
-  version of Quarto installed in our rstudio modules on July 1.
-  Contact help@msi.umn.edu with questions or if you were impacted
-  (e.g., received a malicious login prompt).
+  IMPORTANT NOTE! If you used Quarto inside RStudio before July 1, 2026
+  to generate HTML files, DISCARD those potentially malicious files and
+  recreate them with the newer version of Quarto now installed in our
+  RStudio modules. Contact help@msi.umn.edu with questions or if you
+  were impacted (if you interacted with a malicious login prompt, reset
+  your UMN password immediately).
