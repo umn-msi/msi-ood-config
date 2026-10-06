@@ -51,19 +51,24 @@
           end
 
           def get_integer_percent(numerator, denominator)
+            return 0 if denominator.to_i.zero?
             return (numerator / denominator.to_f * 100.0).to_i
           end
 
           partitions = ['msismall', 'msilarge', 'msibigmem', 'interactive', 'interactive-gpu', 'msigpu']
           sinfo_raw = %x{sinfo -p #{partitions.join(',')} -hNO "CPUsState:|,Partition:|,Gres:|,GresUsed:"}
+          Rails.logger.warn("system_status: sinfo exited with #{$?.exitstatus}") unless $?.success?
 
           partition_stats = {}
 
           sinfo_raw.each_line do |line|
 
-            parts = line.split('|')
+            parts = line.split('|').map(&:strip)
+            next if parts.length < 4
+
             alloc_cores, idle_cores, other_cores, total_cores = parts[0].split('/')
-            partition = parts[1]
+            # sinfo marks the default partition with a trailing '*'
+            partition = parts[1].delete_suffix('*')
 
             partition_stats[partition] ||= PartitionStats.new(partition, 0, 0, 0, 0, {})
             partition_stats[partition].alloc_cores += alloc_cores.to_i
@@ -91,6 +96,11 @@
           <% current_stats = partition_stats[partition] %>
           <br />
           <div class="h4"><%= partition %></div>
+
+          <% if current_stats.nil? %>
+            <div class="h6" style="text-align: left;">Status unavailable</div>
+            <% next %>
+          <% end %>
 
           <div class="h6" style="text-align: left;">Nodes Fully Allocated: <%= current_stats[:alloc_nodes] %>/<%= current_stats[:total_nodes] %></div>
           <div class="progress">
