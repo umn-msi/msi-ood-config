@@ -23,4 +23,4 @@ For assistance, please contact us at:
 * [MSI Help Desk](https://msi.umn.edu/helpdesk)
 * Email help@msi.umn.edu to create a request ticket
 * Call (612) 626-0802
-* Visit 587 Walter Library during office hours Monday - Friday @ 9am-12pm 1pm-4pm
+* Visit 599 Walter Library during office hours Monday - Friday @ 9am-12pm 1pm-4pm
